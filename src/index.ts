@@ -1,12 +1,16 @@
 import { type Request, type Response } from "express"
+import { PrismaClient } from './generated/prisma'
+import {createHash} from 'crypto'
 
 const express = require('express')
 const app = express()
 const port = 3000
+const prisma = new PrismaClient()
 
 
 // ブログを投稿するためのエンドポイント
 app.post('/api/v1/blog/', (req: Request, res: Response) => {
+
     res.sendStatus(201)
 })
 
@@ -145,6 +149,28 @@ app.get('/api/v1/favorite/blogs', (req: Request, res: Response) => {
         ]
     )
 })
+
+// ユーザーを作成するAPI
+app.post('/api/v1/user/', async(req: Request, res: Response) => {
+    const {name, email, password}: {name: string, email: string, password: string} = req.body
+
+    const encryptSha256 = (str: string) => {
+        const hash = createHash('sha256');
+        hash.update(str);
+        return hash.digest('hex')
+    }
+
+    await prisma.user.create({
+        data: {
+            name: name,
+            email: email,
+            password_hash: encryptSha256(password),
+        },
+    })
+    
+    res.status(201)
+})
+
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
