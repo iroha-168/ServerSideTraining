@@ -2,6 +2,7 @@ import { type Request, type Response } from "express"
 import { PrismaClient } from './generated/prisma'
 import {createHash} from 'crypto'
 import express from 'express'
+import cors from 'cors'
 
 const app = express()
 const port = 3000
@@ -10,10 +11,27 @@ app.use(express.json());
 app.use(express.urlencoded({
     extended: true
 }));
+app.use(cors({
+    allowedHeaders: ['X-User-Id'],
+}))
 
 
 // ブログを投稿するためのエンドポイント
-app.post('/api/v1/blog/', (req: Request, res: Response) => {
+app.post('/api/v1/blog/', async(req: Request, res: Response) => {
+
+    console.log(req.headers)
+    console.log(req.headers["x-user-id"])
+
+    const {title, details}: {title: string, details: string} = req.body
+    const user_id = Number.parseInt(req.headers["x-user-id"] as string)
+
+    await prisma.blog.create({
+        data: {
+            user_id: user_id,
+            title: title,
+            details: details,
+        },
+    })
 
     res.sendStatus(201)
 })
@@ -156,7 +174,6 @@ app.get('/api/v1/favorite/blogs', (req: Request, res: Response) => {
 
 // ユーザーを作成するAPI
 app.post('/api/v1/user/', async(req: Request, res: Response) => {
-    console.log(req.body)
     const {name, email, password}: {name: string, email: string, password: string} = req.body
 
     const encryptSha256 = (str: string) => {
