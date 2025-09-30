@@ -37,8 +37,19 @@ app.post('/api/v1/blog/', async(req: Request, res: Response) => {
 })
 
 // ブログを削除するAPI
-app.delete('/api/v1/blog/:id/', (req: Request, res: Response) => {
-    res.status(204)
+app.delete('/api/v1/blog/:id/', async(req: Request, res: Response) => {
+
+    console.log("before delete")
+
+    await prisma.blog.delete({
+        where: {
+            id: Number.parseInt(req.params.id as string),
+        },
+    })
+
+    console.log("after delete")
+
+    res.sendStatus(204)
 })
 
 // ブログをブログIDから取得するエンドポイント
