@@ -53,95 +53,71 @@ app.delete('/api/v1/blog/:id/', async(req: Request, res: Response) => {
 })
 
 // ブログをブログIDから取得するエンドポイント
-app.get('/api/v1/blog/:id/', (req: Request, res: Response) => {
-    res.json({
-        "title":"きょうのできごと",
-        "details":"今日は............でした",
-        "created_at":"2025-08-25T12:00:00Z",
-        "is_favorite":true, 
-        "user":{ 
-            "id": 1,
-            "name":"花子"
+app.get('/api/v1/blog/:id/', async(req: Request, res: Response) => {
+    const id = req.params.id
+
+    const blog = await prisma.blog.findUnique({
+        where: {
+            id: Number.parseInt(id as string),
         },
-        "comments":[
-            {
-                "id":1,
-                "comment":"カスブログやなあ",
-                "user":{
-                    "id": 1,
-                    "name":"花子"
-                }
-            },
-            {
-                "id":2,
-                "comment":"良いブログでした",
-                "user":{
-                    "id": 2,
-                    "name":"太郎"
-                }
-            },
-            {
-                "id":3,
-                "comment":"まあまあですね",
-                "user":{
-                    "id": 3,
-                    "name":"山田"
-                }
-            },
-        ]
     })
+
+    res.json(blog)
 })
 
 // ブログ一覧を取得するAPI
-app.get('/api/v1/blogs', (req: Request, res: Response) => {
-    // TODO: 後でis_favoriteの値を動的に決定する時に使う
-    const {user_id} = req.query
-    // TODO: 誰が花子のブログをいいねしているかを取得するために、AuthorizationHeaderの中身を見てゴニョゴニョする必要あり
+app.get('/api/v1/blogs', async(req: Request, res: Response) => {
+    const user_id = req.query.user_id
 
-    res.json(
-        [
-            {
-                "id":1,
-                "title":"こんにちは",
-                "created_at":"2025-08-25T12:00:00Z",
-                "is_favorite": true,
-                "user":{
-                    "id": 1,
-                    "name":"花子"
-                },
+    if(!user_id) {
+        // 自分のブログ一覧を取得してくる
+        const user_id = req.headers["x-user-id"]
+        const blogs = await prisma.blog.findMany({
+            where:{
+                user_id: Number.parseInt(user_id as string),
             },
-            {
-                "id":2,
-                "title":"おはようございます",
-                "created_at":"2025-08-25T12:00:00Z",
-                "is_favorite": true,
-                "user":{
-                    "id": 1,
-                    "name":"花子"
-                },
+        })
+        res.json(blogs)
+    } else {
+        // 指定されたユーザーのブログ一覧を取得してくる
+        console.log(user_id)
+        const blogs = await prisma.blog.findMany({
+            where:{
+                user_id: Number.parseInt(user_id as string),
             },
-            {
-                "id":3,
-                "title":"おやすみ",
-                "created_at":"2025-08-25T12:00:00Z",
-                "is_favorite": true,
-                "user":{
-                    "id": 1,
-                    "name":"花子"
-                },
-            },
-            
-        ]
-    )
+        })
+        res.json(blogs)
+    }
 })
 
 // コメントを送信するためのAPI
-app.post('/api/v1/comment/', (req: Request, res: Response) => {
+app.post('/api/v1/comment/', async(req: Request, res: Response) => {
+    const user_id = req.headers["x-user-id"]
+    const {blog_id, comment}: {blog_id: string, comment: string} = req.body
+
+    await prisma.comment.create({
+        data: {
+            user_id: Number.parseInt(user_id as string),
+            blog_id: Number.parseInt(blog_id as string),
+            comment: comment,
+        }
+    })
+
     res.status(201)
 })
 
 // いいねをするAPI
-app.post('/api/v1/favorite/', (req: Request, res: Response) => {
+app.post('/api/v1/favorite/', async(req: Request, res: Response) => {
+    const user_id = req.headers["x-user-id"]
+    const {blog_id}: {blog_id: string} = req.body
+
+    await prisma.like.create({
+        data: {
+            user_id: Number.parseInt(user_id as string),
+            blog_id: Number.parseInt(blog_id as string),
+        }
+    })
+    
     res.status(201)
 })
 
