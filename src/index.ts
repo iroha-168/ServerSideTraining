@@ -108,6 +108,7 @@ app.post('/api/v1/comment/', async(req: Request, res: Response) => {
 
 // いいねをするAPI
 app.post('/api/v1/favorite/', async(req: Request, res: Response) => {
+    console.log("foo")
     const user_id = req.headers["x-user-id"]
     const {blog_id}: {blog_id: string} = req.body
 
@@ -122,41 +123,18 @@ app.post('/api/v1/favorite/', async(req: Request, res: Response) => {
 })
 
 // ユーザーIDに紐づくいいねしたブログを全て取得するAPI
-app.get('/api/v1/favorite/blogs', (req: Request, res: Response) => {
-    res.json(
-        [
-            {
-                "id":1,
-                "title":"こんにちは",
-                "created_at":"2025-08-25T12:00:00Z",
-                "is_favorite": true,
-                "user":{
-                    "id": 1,
-                    "name":"花子"
-                },
-            },
-            {
-                "id":2,
-                "title":"おはようございます",
-                "created_at":"2025-08-25T12:00:00Z",
-                "is_favorite": true,
-                "user":{
-                    "id": 1,
-                    "name":"花子"
-                },
-            },
-            {
-                "id":3,
-                "title":"おやすみ",
-                "created_at":"2025-08-25T12:00:00Z",
-                "is_favorite": true,
-                "user":{
-                    "id": 1,
-                    "name":"花子"
-                },
-            },   
-        ]
-    )
+app.get('/api/v1/favorites/', async(req: Request, res: Response) => {
+    console.log("hogehoge")
+    // user_idを取得
+    const user_id = req.headers["x-user-id"]
+
+    // Likeテーブルからuser_idに紐づくblog_idを取得する
+    const blogs = await prisma.like.findMany({
+        where: {
+            user_id: Number.parseInt(user_id as string),
+        },
+    })
+    res.json(blogs)
 })
 
 // ユーザーを作成するAPI
