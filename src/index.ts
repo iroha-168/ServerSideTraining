@@ -124,16 +124,14 @@ app.post('/api/v1/favorite/', async(req: Request, res: Response) => {
 
 // ユーザーIDに紐づくいいねしたブログを全て取得するAPI
 app.get('/api/v1/favorites/', async(req: Request, res: Response) => {
-    console.log("hogehoge")
-    // user_idを取得
     const user_id = req.headers["x-user-id"]
 
-    // Likeテーブルからuser_idに紐づくblog_idを取得する
     const blogs = await prisma.like.findMany({
         where: {
             user_id: Number.parseInt(user_id as string),
         },
     })
+    
     res.json(blogs)
 })
 
